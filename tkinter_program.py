@@ -26,9 +26,22 @@ def user_login():
     entry2 = Entry(login_frame,show = '*')
     entry2.grid(row = 4, pady=10)
 
-    button = Button(login_frame, text = "Submit" ,bg='lavender',fg='dodgerblue')
+    button = Button(login_frame, text = "Submit" ,bg='lavender',fg='dodgerblue',command=greet_user)
     button.grid(row = 5, pady = 20)
     mainloop()
+	
+def greet_user():
+	frame.grid_forget()
+	
+	entry1.delete(0, END)
+	entry2.delete(0, END)
+	
+	global greet_frame
+	greet_frame = Frame(tk,bg = 'turquoise',width = 100,height = 10)
+	greet_frame.grid(padx =10,pady = 5)
+	label = Label(greet_frame,text="User Register Successfully!",font ='bold',bg='lavender',fg='dodgerblue')
+	label.grid(row=0,padx = 10,pady = 10)
+	mainloop()
 
 global tk
 	
