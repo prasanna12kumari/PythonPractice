@@ -1,14 +1,14 @@
-# Import Modules
 import urllib3
 import re
 import datetime
+import sys
 from bs4 import BeautifulSoup
+from fpdf import FPDF	
 
 
 err_msg = "Some Error Occured. Please try later"
-
-d = datetime. datetime.now()
-tdate = d.strftime("%B %d, %Y")
+date_time = datetime.datetime.now()
+tdate = date_time.strftime("%B %d, %Y")
 
 city_code={'1':'Delhi',
 	'1':'Hyderabad',
@@ -22,9 +22,9 @@ city_code={'1':'Delhi',
 	'9':'Lucknow',
 	'10':'Ahmedabad',
 	'11':'Patna'}	
-
-
-def fetch_data(city_name):	
+	
+def scrap_data(city_name):	
+	''' Getting gold price from the website'''
 	try:
 		urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 		http = urllib3.PoolManager()
@@ -46,54 +46,110 @@ def fetch_data(city_name):
 	
 		return err_msg
 		
-def format_data():		
+def format_data(result,city_name):		
 		
-		
-		city_no = input("Enter City code")
-		
-		while(int(city_no) > 11 or int(city_no) <=0):
-			city_no = input("Please Enter Valid City code")
-		
-		city_name = city_code[city_no].lower()		
-		result = fetch_data(city_name)
-		extract_string_list=[]
-		
-		if result == "Data Not Available":
-		
-			print("Data Not Available")
+		''' Fetch the Gold Price and format'''						
+		try:
 			
-		elif result == err_msg:
 			
-			print(err_msg)
-		else:
-			try:
-				for i in result:
-					extract_string_list.append(i.text)		
-					
-				pattern = re.compile("^\s*Rs.\s+([0-9]+)+.([0-9]*)$")
-
-				pricelist = []
+			if result == "Data Not Available":
+			
+				return("Data Not Available")
 				
-				for i in extract_string_list:	
-					if pattern.match(i):
-						pricelist.append(i)
+			elif result == err_msg:
+				
+				return(err_msg)
+				
+			else:
+				try:
+					extract_string_list=[]
+					for i in result:
+						extract_string_list.append(i.text)		
+					
+					pattern = re.compile("^\s*Rs.\s+([0-9]+)+.([0-9]*)$")
+
+					pricelist = []
+					
+					for i in extract_string_list:	
+						if pattern.match(i):
+							pricelist.append(i)								
+					if len(pricelist)== 2:						
+						print("\n"+city_name.capitalize() +" "+ tdate)
+						print("_________________________")
+						print("\n22 Carat Gold Rate is " + pricelist[0])
+						print("\n24 Carat Gold Rate is " + pricelist[1])
+						print("\nYou can also be provided with the pdf for the same!!!")
+						linelist = []
+						linelist.append(city_name.capitalize() +" "+ tdate)
+						linelist.append("22 Carat Gold Rate is " + pricelist[0])
+						linelist.append("24 Carat Gold Rate is " + pricelist[1])
+						return linelist
 						
-				if len(pricelist)== 2:	
-				
-					print("\n"+city_name +" "+ tdate)
-					print("_________________________")
-					print("\n22 Carat Gold Rate is " + pricelist[0])
-					print("24 Carat Gold Rate is " + pricelist[1])
-					
-				else:
-					print(err_msg)
-			except:
-				print(err_msg)
-				
-		
+					else:
+						return(err_msg)
+				except:
+					return(err_msg)
+		except:
+			return(err_msg)
 			
+def generate_pdf(content):
+	''' PDF Generation '''
+	
+	try: 	
+		if isinstance(content, list):
+			pdf = FPDF()
+			pdf.add_page()
+			pdf.set_font("Arial", size=12)
+			pdf.set_text_color(41, 128, 185)
+			pdf.cell(200, 10, txt = "Gold Price Today", ln = 1, align = "C")
+			pdf.line(50, 20, 160, 20)
+			pdf.set_line_width(2)
+			pdf.set_draw_color(54,69,79)
+			pdf.set_text_color(211, 84, 0)
+			
+			pdf.cell(0, 10, txt = content[0], ln = 33, align = "L")
+			pdf.set_text_color(39, 174, 96)
+			pdf.cell(0, 10, txt = content[1], ln = 34, align = "L")
+			pdf.cell(0, 10, txt = content[2], ln = 35, align = "L")
+			pdf.image("Gold.jpg", x = 110, y = 30,w = 50,h=50)
+			date_time =  datetime.datetime.now().strftime("%Y%m%d__%H%M%S")		
+			pdf.output("GoldPriceToday__"+str(date_time)+".pdf")
+		else:
+			print(content)
+			
+	except:
+		print(err_msg)
+		
+def gold_price():
+		
+	print("Welcome to Gold Price Today Application")
+	print("\nCity List with their codes\n")
+	for k in city_code:
+		print(city_code[k]+" : "+ k)		
+	
+	city_no = input("Enter City code")
+		
+	while(int(city_no) > 11 or int(city_no) <=0):
+		city_no = input("Please Enter Valid City code")
+	
+	city_name = city_code[city_no].lower()
+	
+	result = scrap_data(city_name)		
+	content = format_data(result,city_name)		
+	generate_pdf(content)
+	
+	confirm_exit = input("\nPress enter you exit")
+
+	if confirm_exit == "":
+		sys.exit()
+	else:	
+		sys.exit()
+	
 		
 
-		
-format_data()
+gold_price()
+	
+### code for converting python file into exe
 
+### pyinstaller --onefile <your_script_name>.py
+### pyinstaller --onefile GoldPriceFetching.py
